@@ -25,6 +25,28 @@
 		</dependency>
 
 		<dependency>
+			<groupId>ForMonk2</groupId>
+			<artifactId>ForMonk2</artifactId>
+			<scope>system</scope>
+			<version>1.0</version>
+			<systemPath>${basedir}\src\lib\com.ForMonk2.ForMonk2.main.jar</systemPath>
+		</dependency>
+
+		<dependency>
+			<groupId>monkoauth</groupId>
+			<artifactId>monkoauth</artifactId>
+			<scope>system</scope>
+			<version>1.0</version>
+			<systemPath>${basedir}\src\lib\monkoauth.jar</systemPath>
+		</dependency>
+		<!-- https://mvnrepository.com/artifact/com.google.code.gson/gson -->
+		<dependency>
+			<groupId>com.google.code.gson</groupId>
+			<artifactId>gson</artifactId>
+			<version>2.8.5</version>
+		</dependency>
+
+		<dependency>
 			<groupId>org.projectlombok</groupId>
 			<artifactId>lombok</artifactId>
 			<optional>true</optional>
