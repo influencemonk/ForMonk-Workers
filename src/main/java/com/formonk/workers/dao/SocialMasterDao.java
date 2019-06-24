@@ -136,7 +136,7 @@ public class SocialMasterDao implements MongoRepository<SocialMaster, String> {
            String clientId = Constants.SOCIAL_CLIENTS.INSTAGRAM;
            AggregationOperation validClientIds = Aggregation.match(new Criteria().andOperator(
                    Criteria.where("clientId").is(clientId),
-                   Criteria.where("expiryDate").lte(Instant.now()
+                   Criteria.where("expiryDate").gte(Instant.now()
                    )));
 
            AggregationOperation groupBySocialhandle = Aggregation

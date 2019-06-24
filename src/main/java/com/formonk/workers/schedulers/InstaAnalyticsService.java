@@ -24,7 +24,7 @@ public class InstaAnalyticsService {
     @Autowired
     InstagramAnalyticsLogsDao instagramAnalyticsLogsDao;
 
-    @Scheduled(fixedDelay = 100000)
+    @Scheduled(fixedDelay = 12 * 60 * 60 * 1000)
     public void executeService() {
         List<GetUniqueAuthTokens> tokens = socialMasterDao.getUniqueAuthTokens();
         if (tokens == null || tokens.isEmpty())
@@ -32,40 +32,41 @@ public class InstaAnalyticsService {
 
         tokens.parallelStream().forEach(token -> {
             InstagramMediaResponse mediaData = getInstagramMedia(token.getSocialHandleId() , token.getAccessToken());
-            if(mediaData != null ) {
-                long engagement = getEngagementFromPost(mediaData);
-                double averageComments = getAverageComments(mediaData);
-                double averageLikes = getAverageLikes(mediaData);
-                double followersCount = mediaData.getFollowers_count();
-                double followingCount = mediaData.getFollows_count();
+          //  synchronized (InstaAnalyticsService.class) {
+                if(mediaData != null ) {
+                    double engagement = getEngagementFromPost(mediaData);
+                    double averageComments = getAverageComments(mediaData);
+                    double averageLikes = getAverageLikes(mediaData);
+                    double followersCount = mediaData.getFollowers_count();
+                    double followingCount = mediaData.getFollows_count();
 
-                InstagramAnalyticsLogsModel analyticsModel = new InstagramAnalyticsLogsModel();
-                analyticsModel.setSocialHandleId(token.getSocialHandleId());
-                analyticsModel.setImcId(mediaData.getIMCId());
-                analyticsModel.setFollowersCount((int) followersCount);
-                analyticsModel.setFollowingCount((int) followingCount);
-                analyticsModel.setAverageLikes((int) averageLikes);
-                analyticsModel.setAverageComments((int) averageComments);
-                analyticsModel.setAverageEngagement((int) engagement);
-
-                instagramAnalyticsLogsDao.insert(analyticsModel);
+                    InstagramAnalyticsLogsModel analyticsModel = new InstagramAnalyticsLogsModel();
+                    analyticsModel.setSocialHandleId(token.getSocialHandleId());
+                    analyticsModel.setImcId(mediaData.getIMCId());
+                    analyticsModel.setFollowersCount((int) followersCount);
+                    analyticsModel.setFollowingCount((int) followingCount);
+                    analyticsModel.setAverageLikes((int) averageLikes);
+                    analyticsModel.setAverageComments((int) averageComments);
+                    analyticsModel.setAverageEngagement((int) engagement);
+                    analyticsModel.setMediaCount(mediaData.getMedia_count());
+                    instagramAnalyticsLogsDao.insert(analyticsModel);
+               //    }
             }
         });
 
-        System.out.println(getEngagementFromPost(getInstagramMedia(tokens.get(1).getSocialHandleId() , tokens.get(1).getAccessToken())));
     }
 
-    private Long getEngagementFromPost(InstagramMediaResponse mediaResponse) {
+    private double getEngagementFromPost(InstagramMediaResponse mediaResponse) {
         List<InstagramMediaResponse.InstagramPostMediaData> data = mediaResponse.getMedia().getData();
         try{
-            return data.stream().map(x -> x.getInsights()
+            long totalEngagement =  data.stream().map(x -> x.getInsights()
                     .getData()
                     .stream()
                     .filter(y -> y.getName().equals("engagement"))
                     .collect(Collectors.toList())
                     .get(0)
                     .getInsightValues().get(0).getValue()).reduce(0L , (a, b) -> a + b);
-            //InstagramMediaResponse.Insights insight = data.get();
+            return totalEngagement / mediaResponse.getMedia().getData().size();
         }catch (Exception e ){
             return 0L;
         }
@@ -76,7 +77,7 @@ public class InstaAnalyticsService {
                 .getMedia()
                 .getData()
                 .stream()
-                .map(x -> x.getLikeCount())
+                .map(x -> x.getLike_count())
                 .reduce(0, (a, b) -> a + b);
 
     }
@@ -86,7 +87,7 @@ public class InstaAnalyticsService {
                 .getMedia()
                 .getData()
                 .stream()
-                .map(x -> x.getCommentsCount())
+                .map(x -> x.getComments_count())
                 .reduce(0, (a, b) -> a + b);
 
     }
@@ -103,7 +104,6 @@ public class InstaAnalyticsService {
 
             return new Gson().fromJson(response, InstagramMediaResponse.class);
         } catch (Exception e) {
-            e.printStackTrace();
         }
         return null;
     }
